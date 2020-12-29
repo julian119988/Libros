@@ -51,11 +51,9 @@ router.delete("/:id", async (req, res, next) => {
       const categoriaBorrada = await CategoriaModel.findByIdAndDelete(id);
       res.status(200).json(categoriaBorrada);
     }
-    res
-      .status(413)
-      .send({
-        mensaje: "La categoria no se puede borrar ya que tiene libros.",
-      });
+    res.status(413).send({
+      mensaje: "La categoria no se puede borrar ya que tiene libros asociados.",
+    });
   } catch (error) {
     res.status(413).send({
       mensaje:

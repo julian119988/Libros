@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const PersonaModel = require("../models/persona");
+const LibroModel = require("../models/libro");
 
 router.post("/", async (req, res, next) => {
   const persona = new PersonaModel({
@@ -36,7 +37,11 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const persona = await PersonaModel.findById(id);
-    res.status(200).json(persona);
+    const libro = await LibroModel.find({ persona_id: persona.id });
+    if (libro == "") {
+      res.status(200).send({ mensaje: "Esta persona no tiene ningun libro" });
+    }
+    res.status(200).json(libro);
   } catch (error) {
     res.status(413);
     res.send("mensaje: 'Error inesperado', 'No se encuentra esa persona'");
@@ -71,16 +76,24 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res, next) => {
   const { id } = req.params;
   try {
-    const personaBorrada = await PersonaModel.findByIdAndDelete(id);
-    res.status(200).json(personaBorrada);
-    console.log("Se borro correctamente");
-  } catch (error) {
+    const persona = await PersonaModel.findById(id);
+    const libro = await LibroModel.find({ persona_id: persona.id });
+    if (libro == "") {
+      const personaBorrada = await PersonaModel.findByIdAndDelete(id);
+      console.log("Se borro correctamente");
+      res.status(200).json(personaBorrada);
+    }
     res
-      .status(413)
-      .send(error, {
+      .status(200)
+      .send({
         mensaje:
-          "Error inesperado, No existe esa persona, Esa persona tiene libros asociados no se puede eliminar",
+          "No se puede borrar a la persona porque tiene libros prestados.",
       });
+  } catch (error) {
+    res.status(413).send(error, {
+      mensaje:
+        "Error inesperado, No existe esa persona, Esa persona tiene libros asociados no se puede eliminar",
+    });
     next(error);
   }
 });
